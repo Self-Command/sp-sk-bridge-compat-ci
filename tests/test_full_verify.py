@@ -66,6 +66,9 @@ class FullEvidenceTests(unittest.TestCase):
         self.assertFalse(contract_ok(old,{path:new[path].replace('Implement normalize_title','Implement other')}))
         self.assertFalse(contract_ok(old,{path:new[path]+'- [ ] T004 New requirement\n'}))
         self.assertFalse(contract_ok(old,{path:new[path].replace('tests exit 0.','MUST add persistence; tests exit 0.')}))
+        final='\n## Final verification and review\n- Task commits: T001 abc123.\n- One reviewer passed 15 tests.\n'
+        self.assertTrue(contract_ok(old,{path:new[path]+final}))
+        self.assertFalse(contract_ok(old,{path:new[path]+final+'MUST add persistence.\n'}))
 
     def test_actual_parser_diagnostic_does_not_require_its_class_name(self):
         broken='hooks: [ deliberately invalid: [\n'

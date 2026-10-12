@@ -174,10 +174,11 @@ def contract_ok(before, after):
     filtered={name.replace('\\','/'):text for name,text in after.items()}
     for name,text in list(filtered.items()):
         if name.endswith('/tasks.md'):
-            section=re.search(r'^## Recovery of injected product fault\n([\s\S]*?)(?=^## |\Z)',text,re.M)
-            if section:
-                body=section.group(1)
-                if ('normalize_title' in body and 'exit 1' in body and 'exit' in body
-                    and not re.search(r'^- \[[ xX]\] T\d+|\bMUST\b|\bSHALL\b',body,re.M)):
-                    filtered[name]=text[:section.start()]+text[section.end():]
+            sections=list(re.finditer(r'^## (Recovery of injected product fault|Final verification and review)\n([\s\S]*?)(?=^## |\Z)',text,re.M))
+            for section in reversed(sections):
+                title,body=section.group(1,2)
+                facts=('normalize_title' in body and 'exit 1' in body and 'exit' in body) if title.startswith('Recovery') else ('reviewer' in body and 'tests' in body and 'Task commits:' in body)
+                if facts and not re.search(r'^- \[[ xX]\] T\d+|\bMUST\b|\bSHALL\b',body,re.M):
+                    text=text[:section.start()]+text[section.end():]
+            filtered[name]=text
     return all(preserved_contracts(normalized_before,filtered).values())
