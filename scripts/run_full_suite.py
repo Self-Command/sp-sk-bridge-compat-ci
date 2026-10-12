@@ -621,7 +621,10 @@ on GitHub. Product code is already verified and reviewed; no new reviewers.
    Verify tests after merge and let native cleanup remove its own worktree.
 2. PR fixture: return to the normal consumer root, push local main as the remote
    test base {remote_base} using remote github. Create named branch {remote_head}
-   from that base; push the verified product to this branch. Invoke native
+   from that base. Add CI_PR_FIXTURE.md containing only this run's identity and
+   commit that metadata file so the PR has a real base/head difference. Do not
+   change product code or requirements. Set up gh's Git credential helper for
+   the supplied scoped token, then push this test branch. Invoke native
    finishing-a-development-branch choosing push/create PR, explicitly targeting
    {remote_base} in Self-Command/sp-sk-bridge-compat-ci (remote github; temporarily
    use it as origin if needed). No merge of this PR, no publication or releases.

@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
-from full_verify import task_adapter_check, tests_pass, skill_read, usage
+from full_verify import contract_ok, task_adapter_check, tests_pass, skill_read, usage
 from sanitize import redact
 from suite_verify import rows
 
@@ -54,6 +54,16 @@ class FullEvidenceTests(unittest.TestCase):
             p=Path(d)/'events.jsonl'
             p.write_text('{"status":"ready"}\n',encoding='utf-8-sig')
             self.assertEqual(rows(p),[{'status':'ready'}])
+
+    def test_external_fault_recovery_log_preserves_original_contract(self):
+        path='specs/001/tasks.md'
+        old={path:'- [ ] T001 Implement normalize_title; record evidence in tasks.md.\n'}
+        appendix='\n## T001 execution evidence\nRED exit 1; GREEN exit 0.\n\n## Recovery of injected product fault\n\n- Tests exit 1; removed external normalize_title rebinding; tests exit 0.\n'
+        new={path:old[path].replace('[ ]','[x]')+appendix}
+        self.assertTrue(contract_ok(old,new))
+        self.assertFalse(contract_ok(old,{path:new[path].replace('Implement normalize_title','Implement other')}))
+        self.assertFalse(contract_ok(old,{path:new[path]+'- [ ] T004 New requirement\n'}))
+        self.assertFalse(contract_ok(old,{path:new[path].replace('tests exit 0.','MUST add persistence; tests exit 0.')}))
 
 
 if __name__=='__main__':unittest.main()

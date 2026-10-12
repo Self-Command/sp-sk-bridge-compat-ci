@@ -327,7 +327,7 @@ the configured TMPDIR/TEMP directory; preserve native skill behavior.
         prompt='Read CI_CONSTRAINTS.md first if present. '+prompt+suffix
         write(destination/'prompt.txt',prompt)
         args=['codex','--no-daemon','exec','--json','--color','never','-m',MODEL,
-              '-c',f'model_reasoning_effort="{effort}"','-c','model_provider="krill"',
+              '-c',f"model_reasoning_effort='{effort}'",'-c',"model_provider='krill'",
               '--dangerously-bypass-approvals-and-sandbox','-C',root,
               '--output-last-message',destination/'last-message.md','-']
         write(destination/'invocation.json',json.dumps({'command':list(map(str,args)),

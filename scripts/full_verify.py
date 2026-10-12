@@ -156,4 +156,17 @@ def protected_ok(root, before):
 
 
 def contract_ok(before, after):
-    return all(preserved_contracts(before,after).values())
+    # This suite explicitly injects a fault after T001 and requests its repair.
+    # A separate factual recovery log is execution evidence; it cannot change
+    # any original requirement. Only this precise heading and bounded section
+    # are admitted, retaining the original prefix and task-ID checks.
+    filtered=dict(after)
+    for name,text in after.items():
+        if name.endswith('/tasks.md'):
+            section=re.search(r'^## Recovery of injected product fault\n([\s\S]*?)(?=^## |\Z)',text,re.M)
+            if section:
+                body=section.group(1)
+                if ('normalize_title' in body and 'exit 1' in body and 'exit' in body
+                    and not re.search(r'^- \[[ xX]\] T\d+|\bMUST\b|\bSHALL\b',body,re.M)):
+                    filtered[name]=text[:section.start()]+text[section.end():]
+    return all(preserved_contracts(before,filtered).values())
