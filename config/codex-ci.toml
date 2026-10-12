@@ -1,0 +1,28 @@
+model = "gpt-6.1-sol"
+model_provider = "krill"
+model_reasoning_effort = "xhigh"
+service_tier = "default"
+web_search = "live"
+suppress_unstable_features_warning = true
+notify = []
+cli_auth_credentials_store = "file"
+
+[model_providers.krill]
+name = "OpenAI"
+base_url = "https://api.krill-code.net/codex/v1"
+model_catalog_url = "https://api.krill-code.net/backend-api/codex/models"
+requires_openai_auth = true
+wire_api = "responses"
+
+[features]
+multi_agent = true
+
+[agents]
+default_subagent_model = "gpt-6.1-sol"
+default_subagent_reasoning_effort = "xhigh"
+max_concurrent_threads_per_session = 1
+max_depth = 1
+
+[agents.reviewer]
+description = "Independent code and evidence reviewer. Only gpt-6.1-sol is permitted."
+config_file = "agents/reviewer.toml"
