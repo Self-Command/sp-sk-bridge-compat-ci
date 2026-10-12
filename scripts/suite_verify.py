@@ -50,3 +50,26 @@ def injected_skills(directory):
 def rows(path):
     path=Path(path)
     return [json.loads(line) for line in path.read_text(encoding='utf-8').splitlines() if line.strip()] if path.exists() else []
+
+
+def preserved_contracts(before,after):
+    """Allow evidence explicitly required by the original task; never allow requirement edits."""
+    normalize=lambda text:re.sub(r'^(- \[)[xX](\] T\d+)',r'\1 \2',text,flags=re.M)
+    checks={}
+    for name,old in before.items():
+        new=after.get(name,'')
+        left=normalize(old);right=normalize(new)
+        if left==right:
+            checks[name]=True
+            continue
+        appendix=right[len(left):] if right.startswith(left) else ''
+        original_lines=re.findall(r'^- \[[ xX]\] T\d+.*$',old,re.M)
+        evidence_requested=any('evidence' in line.lower() and 'tasks.md' in line for line in original_lines)
+        headings=re.findall(r'^## ([^\n]+)',appendix,re.M)
+        # Native SK may explicitly require execution evidence in tasks.md. It must
+        # be append-only, with no new task IDs and only execution-evidence headings.
+        legal=(name.endswith('/tasks.md') and evidence_requested and bool(appendix.strip())
+               and bool(headings) and all(re.fullmatch(r'T\d+ execution evidence',h) for h in headings)
+               and not re.search(r'^- \[[ xX]\] T\d+',appendix,re.M))
+        checks[name]=legal
+    return checks

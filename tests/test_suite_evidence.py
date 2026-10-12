@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 import unittest
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
-from suite_verify import tdd_order
+from suite_verify import tdd_order, preserved_contracts
 
 
 class SuiteEvidenceTests(unittest.TestCase):
@@ -21,3 +21,16 @@ class SuiteEvidenceTests(unittest.TestCase):
         records=[{'command':'cat test-driven-development/SKILL.md','exit_code':1,'aggregated_output':'FAILED (errors=1)'},
                  {'command':'cat unittest-guide.md','exit_code':0,'aggregated_output':'Ran 3 tests\nOK'}]
         self.assertFalse(tdd_order(records))
+
+    def test_explicit_task_evidence_is_allowed_but_requirement_changes_are_not(self):
+        old={'specs/001/tasks.md':'# Tasks\n- [ ] T001 Implement add and preserve execution evidence in tasks.md.\n'}
+        evidence='\n## T001 execution evidence\nRED failed; GREEN passed.\n'
+        new={'specs/001/tasks.md':old['specs/001/tasks.md'].replace('[ ]','[x]')+evidence}
+        self.assertTrue(all(preserved_contracts(old,new).values()))
+        new['specs/001/tasks.md']=new['specs/001/tasks.md'].replace('Implement add','Implement subtract')
+        self.assertFalse(all(preserved_contracts(old,new).values()))
+
+    def test_unrequested_appendix_cannot_change_contract(self):
+        old={'specs/001/tasks.md':'- [ ] T001 Implement add.\n'}
+        new={'specs/001/tasks.md':old['specs/001/tasks.md']+'\n## T001 execution evidence\nDone.\n'}
+        self.assertFalse(all(preserved_contracts(old,new).values()))
