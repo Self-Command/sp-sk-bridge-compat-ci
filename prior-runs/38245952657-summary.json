@@ -1,0 +1,12 @@
+{
+  "run_url": "https://github.com/Self-Command/sp-sk-bridge-compat-ci/actions/runs/38245952657",
+  "model_calls": 1,
+  "reviewer_spawns": 0,
+  "model": "gpt-6.1-sol",
+  "reasoning": "low",
+  "probe_succeeded": true,
+  "exit_code": 0,
+  "usage": {"input_tokens":29531,"cached_input_tokens":14464,"output_tokens":180},
+  "controller_defect": "A transient git push failure left the original workflow on main. This run was canceled after the same successful probe and snapshot failure. No product compatibility scenario executed.",
+  "remaining_top_level_invocation_budget": 18
+}

@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parents[1]
 LOCK = json.loads((ROOT/'versions-lock.json').read_text())
 WIN = os.name == 'nt'
 MODEL = LOCK['model']
-CALL_LIMITS = {'latest-linux':12, 'latest-windows':4, 'baseline-linux':4}
+CALL_LIMITS = {'latest-linux':10, 'latest-windows':4, 'baseline-linux':4}
 SPAWN_LIMITS = {'latest-linux':6, 'latest-windows':3, 'baseline-linux':3}
 
 
@@ -256,10 +256,11 @@ the configured TMPDIR/TEMP directory; preserve native skill behavior.
                 target.parent.mkdir(parents=True,exist_ok=True)
                 if path.stat().st_size < 5000000:
                     target.write_text(redact(path.read_text(encoding='utf-8-sig',errors='replace')),encoding='utf-8')
-        self.command(name+'-git-log',['git','log','--format=%H %s','--all'],root)
-        self.command(name+'-git-diff',['git','diff','main','--'],root)
-        self.command(name+'-git-status',['git','status','--porcelain'],root)
-        self.command(name+'-git-remotes',['git','remote','-v'],root)
+        self.command(name+'-git-log',['git','log','--format=%H %s','--all'],root,check=False)
+        has_main=self.command(name+'-main-ref',['git','rev-parse','--verify','main'],root,check=False).returncode==0
+        self.command(name+'-git-diff',['git','diff',*(['main'] if has_main else []),'--'],root,check=False)
+        self.command(name+'-git-status',['git','status','--porcelain'],root,check=False)
+        self.command(name+'-git-remotes',['git','remote','-v'],root,check=False)
 
     def capture_scratch(self,root,destination,seen):
         for base in [root/'.superpowers',self.tmp]:
@@ -606,7 +607,15 @@ def main():
             controller.prepare('installation-probe','main')
             controller.record('local setup','pass','No model calls; fixed upstream installation checked')
             return
-        controller.probe()
+        if args.lane=='latest-linux':
+            previous=json.loads((ROOT/'prior-runs/38245424879-summary.json').read_text())
+            if previous.get('probe_succeeded') and previous.get('model')==MODEL:
+                controller.ready=True
+                controller.record('connection and shell tools','pass','Reused externally checked successful first-run probe; original run and exact usage retained in prior-runs')
+            else:
+                raise InfrastructureError('Retained probe is not valid')
+        else:
+            controller.probe()
         root,complete=controller.main_case(generated=args.lane=='latest-linux')
         controller.second_feature(root,complete)
         if args.lane=='latest-linux':

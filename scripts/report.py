@@ -10,6 +10,9 @@ def report(root):
     results = [json.loads(p.read_text()) for p in sorted(root.glob('*/results.json'))]
     rows = []
     calls = spawns = 0
+    prior=[json.loads(p.read_text()) for p in (Path(__file__).resolve().parents[1]/'prior-runs').glob('*-summary.json')]
+    calls+=sum(p.get('model_calls',0) for p in prior)
+    spawns+=sum(p.get('reviewer_spawns',0) for p in prior)
     for lane in results:
         calls += lane.get('model_calls', 0)
         spawns += lane.get('reviewer_spawns', 0)
@@ -25,6 +28,9 @@ def report(root):
     else:
         verdict = 'All executed scenarios passed. Check coverage and lane completeness below.'
     usage={'input_tokens':0,'cached_input_tokens':0,'output_tokens':0}
+    for previous in prior:
+        for key in usage:
+            usage[key]+=previous.get('usage',{}).get(key,0)
     for path in root.glob('*/*/process.json'):
         process=json.loads(path.read_text())
         for turn in process.get('usage',[]):
@@ -33,6 +39,7 @@ def report(root):
     text = '\n'.join([
         '# Bridge compatibility report', '', verdict, '',
         f'Top-level Codex calls: {calls}/20; reviewer spawns: {spawns}/12.',
+        'Totals include the retained first-run probe and controller-failure evidence.',
         f'Missing lanes: {missing or "none"}.', '',
         f'Client-reported token totals: {usage}. Cached input is a subset of input.', '',
         '| Lane | Scenario | Result | Evidence finding |',
