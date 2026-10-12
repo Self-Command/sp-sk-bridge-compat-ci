@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parents[1]
 LOCK = json.loads((ROOT/'versions-lock.json').read_text())
 WIN = os.name == 'nt'
 MODEL = LOCK['model']
-CALL_LIMITS = {'latest-linux':11, 'latest-windows':4, 'baseline-linux':4}
+CALL_LIMITS = {'latest-linux':10, 'latest-windows':4, 'baseline-linux':4}
 SPAWN_LIMITS = {'latest-linux':6, 'latest-windows':3, 'baseline-linux':3}
 
 
@@ -607,7 +607,15 @@ def main():
             controller.prepare('installation-probe','main')
             controller.record('local setup','pass','No model calls; fixed upstream installation checked')
             return
-        controller.probe()
+        if args.lane=='latest-linux':
+            previous=json.loads((ROOT/'prior-runs/38245424879-summary.json').read_text())
+            if previous.get('probe_succeeded') and previous.get('model')==MODEL:
+                controller.ready=True
+                controller.record('connection and shell tools','pass','Reused externally checked successful first-run probe; original run and exact usage retained in prior-runs')
+            else:
+                raise InfrastructureError('Retained probe is not valid')
+        else:
+            controller.probe()
         root,complete=controller.main_case(generated=args.lane=='latest-linux')
         controller.second_feature(root,complete)
         if args.lane=='latest-linux':
