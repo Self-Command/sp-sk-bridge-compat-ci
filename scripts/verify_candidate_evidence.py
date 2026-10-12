@@ -38,7 +38,11 @@ def inspect(root):
             for relative in product_paths:
                 original=(main/relative).read_bytes()
                 if kind=='gap' and relative.name=='resume_app.py':
-                    original+=b'\n# Deliberate external convergence assessment fault\nmake_task = lambda title: {"title": normalize_title(title), "completed": True}\n'
+                    suffix=b'\n# Deliberate external convergence assessment fault\nmake_task = lambda title: {"title": normalize_title(title), "completed": True}\n'
+                    # The Windows fixture writer uses the platform's CRLF.
+                    if lane.endswith('windows'):
+                        suffix=suffix.replace(b'\n',b'\r\n')
+                    original+=suffix
                 checks[lane+'/'+kind+'/'+relative.as_posix()+'/unchanged']=((case/relative).read_bytes()==original)
             for name in ('spec.md','plan.md'):
                 checks[lane+'/'+kind+'/'+name+'/unchanged']=(case/feature/name).read_bytes()==(main/feature/name).read_bytes()
