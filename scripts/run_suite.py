@@ -225,6 +225,10 @@ second tiny feature: append calculator.subtract(a,b), returning integer a-b.
 Exactly three new unittest cases: subtract(2,3)==-1, subtract(-2,2)==-4,
 subtract(0,0)==0. Preserve existing add and its three tests. No other feature.
 Prefer one cohesive code/test task where native SK allows. Stop before code.
+The user has approved this exact test-scope amendment as part of complete entry
+coverage. If the constitution currently permits addition only, use the installed
+$speckit-constitution skill to amend only that scope to allow the stated subtraction
+and exactly three extra tests before planning; all prior principles still bind.
 ''',360)
         state=self.c.state(self.root);events=rows(self.root/'.specify/bridge-events.jsonl')
         feature=str(self.feature().relative_to(self.root))
