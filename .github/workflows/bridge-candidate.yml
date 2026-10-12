@@ -1,0 +1,166 @@
+name: Bridge v1.4.0 candidate full regression
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_run:
+        description: Successful source candidate-package run ID
+        required: true
+        type: string
+      candidate_sha:
+        description: Exact source candidate commit SHA
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: bridge-v140-regression
+  cancel-in-progress: false
+jobs:
+  harness:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - run: python -m pip install pyyaml
+      - run: python -m unittest discover -s tests -v
+      - name: Enforce cumulative repair budget before any paid call
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/candidate_budget.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: candidate-budget
+          path: candidate-budget.json
+  linux:
+    needs: harness
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    permissions:
+      contents: write
+      actions: read
+      issues: write
+      pull-requests: write
+    outputs:
+      ready: ${{ steps.real.outputs.ready }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - name: Install fixed tools and fetch exact candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CANDIDATE_RUN: ${{ inputs.candidate_run }}
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+        run: |
+          npm install -g @openai/codex@0.162.1
+          python -m pip install uv pyyaml
+          gh run download "$CANDIDATE_RUN" --repo Self-Command/speckit-superpowers-bridge --name bridge-candidate-package --dir candidate
+          python scripts/check_candidate.py candidate "$CANDIDATE_SHA"
+      - name: Real Linux full suite - at most 14 main calls and 4 reviewers
+        id: real
+        env:
+          KRILL_API_KEY: ${{ secrets.KRILL_API_KEY }}
+          GITHUB_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
+          PYTHONUTF8: '1'
+          BRIDGE_CANDIDATE_ZIP: candidate/speckit-superpowers-bridge-v1.4.0.zip
+          BRIDGE_CANDIDATE_INDEX: candidate/candidate-index.json
+          BRIDGE_CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+        run: python scripts/run_candidate_suite.py --lane latest-linux
+      - name: Sanitize evidence
+        id: sanitized
+        if: always()
+        env:
+          KRILL_API_KEY: ${{ secrets.KRILL_API_KEY }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python scripts/sanitize.py evidence
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.sanitized.outcome == 'success'
+        with:
+          name: candidate-full-linux
+          path: evidence/
+          include-hidden-files: true
+          retention-days: 14
+  windows:
+    needs: [harness, linux]
+    if: always() && needs.harness.result == 'success' && needs.linux.outputs.ready == 'true'
+    runs-on: windows-2022
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - name: Install fixed tools and fetch exact candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CANDIDATE_RUN: ${{ inputs.candidate_run }}
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+        run: |
+          npm install -g @openai/codex@0.162.1
+          python -m pip install uv pyyaml
+          gh run download $env:CANDIDATE_RUN --repo Self-Command/speckit-superpowers-bridge --name bridge-candidate-package --dir candidate
+          python scripts/check_candidate.py candidate $env:CANDIDATE_SHA
+      - name: Real Windows full suite - at most 6 main calls and 2 reviewers
+        env:
+          KRILL_API_KEY: ${{ secrets.KRILL_API_KEY }}
+          PYTHONUTF8: '1'
+          BRIDGE_CANDIDATE_ZIP: candidate/speckit-superpowers-bridge-v1.4.0.zip
+          BRIDGE_CANDIDATE_INDEX: candidate/candidate-index.json
+          BRIDGE_CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+        run: python scripts/run_candidate_suite.py --lane latest-windows
+      - name: Sanitize evidence
+        id: sanitized
+        if: always()
+        env:
+          KRILL_API_KEY: ${{ secrets.KRILL_API_KEY }}
+        run: python scripts/sanitize.py evidence
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.sanitized.outcome == 'success'
+        with:
+          name: candidate-full-windows
+          path: evidence/
+          include-hidden-files: true
+          retention-days: 14
+  report:
+    if: always()
+    needs: [linux, windows]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: candidate-full-*
+          path: evidence
+          merge-multiple: true
+      - run: python scripts/candidate_report.py evidence
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: candidate-full-report
+          path: |
+            evidence/candidate-report.zh-CN.md
+            evidence/candidate-results.json
+          retention-days: 14

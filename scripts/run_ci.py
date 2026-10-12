@@ -18,6 +18,8 @@ import time
 import traceback
 import urllib.request
 import zipfile
+import functools
+import http.server
 
 from fixtures import CONSTITUTION, PRODUCT, create, write
 from sanitize import redact, sanitize
@@ -144,11 +146,25 @@ class Controller:
         version=self.command('codex-version',['codex','--version']).stdout.strip()
         if LOCK['codex'] not in version:
             raise InfrastructureError(f'Codex version mismatch: {version}')
-        archive=self.runtime/'bridge-v1.3.0.zip'
-        if not archive.exists():
+        candidate=os.environ.get('BRIDGE_CANDIDATE_ZIP')
+        archive=Path(candidate).resolve() if candidate else self.runtime/'bridge-v1.3.0.zip'
+        expected_zip_sha=LOCK['bridge']['asset_sha256']
+        self.candidate_index=None
+        if candidate:
+            self.candidate_index=json.loads(Path(os.environ['BRIDGE_CANDIDATE_INDEX']).read_text(encoding='utf-8'))
+            expected_zip_sha=self.candidate_index['zip_sha256']
+            if self.candidate_index['source_sha'] != os.environ.get('BRIDGE_CANDIDATE_SHA'):
+                raise InfrastructureError('Candidate source SHA differs from dispatched immutable commit')
+        elif not archive.exists():
             urllib.request.urlretrieve(LOCK['bridge']['asset'],archive)
-        if digest(archive) != LOCK['bridge']['asset_sha256']:
+        if digest(archive) != expected_zip_sha:
             raise InfrastructureError('Bridge release ZIP SHA256 mismatch')
+        self.candidate_url=None
+        if candidate:
+            handler=functools.partial(http.server.SimpleHTTPRequestHandler,directory=str(archive.parent))
+            self.candidate_server=http.server.ThreadingHTTPServer(('127.0.0.1',0),handler)
+            threading.Thread(target=self.candidate_server.serve_forever,daemon=True).start()
+            self.candidate_url='http://127.0.0.1:'+str(self.candidate_server.server_port)+'/'+archive.name
         # Install via the native Codex plugin marketplace from the pinned checkout.
         marketplace=self.sources['superpowers']/'.agents/plugins/marketplace.json'
         if not marketplace.exists():
@@ -171,7 +187,7 @@ class Controller:
                 raise InfrastructureError('Installed SP skill differs from pinned upstream: '+skill)
         write(self.evidence/'versions.json',json.dumps({'locked':LOCK,'lane_versions':group,
               'codex_version':version,'plugin_skill_hashes':self.plugin_files,
-              'bridge_zip_sha256':digest(archive)},indent=2))
+              'bridge_zip_sha256':digest(archive),'candidate':self.candidate_index},indent=2))
         if authenticate:
             key=os.environ.get('KRILL_API_KEY','')
             if not key:
@@ -186,11 +202,13 @@ class Controller:
         self.command(name+'-init',[self.specify,'init','--here','--force','--non-interactive',
                     '--integration','codex','--script',flavor,'--ignore-agent-tools'],root)
         self.command(name+'-bridge',[self.specify,'extension','add','speckit-superpowers-bridge',
-                    '--from',LOCK['bridge']['asset']],root,input='y\n')
+                    '--from',self.candidate_url if self.candidate_index else LOCK['bridge']['asset']],root,input='y\n')
         skill_names=sorted(p.parent.name for p in (root/'.agents/skills').glob('*/SKILL.md'))
         expected={'speckit-superpowers-bridge','speckit-speckit-superpowers-bridge-execute',
                   'speckit-speckit-superpowers-bridge-handoff','speckit-speckit-superpowers-bridge-guard',
                   'speckit-specify','speckit-plan','speckit-tasks','speckit-analyze'}
+        if self.candidate_index:
+            expected.add('speckit-speckit-superpowers-bridge-converge')
         missing=expected-set(skill_names)
         if missing:
             raise InfrastructureError('Missing installed skills: '+str(sorted(missing)))
