@@ -60,13 +60,15 @@ def terminate(proc):
 
 
 class Controller:
-    def __init__(self, lane):
+    def __init__(self, lane, call_limit=None, spawn_limit=None):
         self.lane = lane
         self.runtime = ROOT/'.runtime'/lane
         self.evidence = ROOT/'evidence'/lane
         self.evidence.mkdir(parents=True, exist_ok=True)
         self.runtime.mkdir(parents=True, exist_ok=True)
         self.calls = 0
+        self.call_limit=call_limit or CALL_LIMITS[lane]
+        self.spawn_limit=spawn_limit or SPAWN_LIMITS[lane]
         self.spawns = set()
         self.results = []
         self.identities = set()
@@ -114,7 +116,7 @@ class Controller:
         write(self.evidence/'results.json',json.dumps({'lane':self.lane,'model_calls':self.calls,
             'reviewer_spawns':len(self.spawns),'models_observed':sorted(self.identities),
             'scenarios':self.results,'connectivity_ready':self.ready,
-            'limits':{'calls':CALL_LIMITS[self.lane],'reviewers':SPAWN_LIMITS[self.lane]},
+            'limits':{'calls':self.call_limit,'reviewers':self.spawn_limit},
             'requested_model':MODEL},indent=2))
 
     def setup(self,authenticate=True):
@@ -292,7 +294,7 @@ the configured TMPDIR/TEMP directory; preserve native skill behavior.
                     payload=row.get('payload',{})
                     if row.get('type')=='turn_context' and payload.get('model'):
                         self.identities.add(payload['model'])
-                    if row.get('type')=='response_item' and payload.get('type')=='function_call' and re.search(r'(?:^|__)spawn_agent$',payload.get('name','')):
+                    if row.get('type')=='response_item' and payload.get('type')=='function_call' and re.search(r'(?:^|[._])spawn_agent$',payload.get('name','')):
                         self.spawns.add(payload.get('call_id') or hashlib.sha256(line.encode()).hexdigest())
                         try:
                             arguments=json.loads(payload.get('arguments','{}'))
@@ -304,11 +306,11 @@ the configured TMPDIR/TEMP directory; preserve native skill behavior.
                 pass
         if self.identities-{MODEL}:
             raise InfrastructureError('Unexpected session model: '+str(self.identities-{MODEL}))
-        if len(self.spawns)>SPAWN_LIMITS[self.lane]:
+        if len(self.spawns)>self.spawn_limit:
             raise InfrastructureError('Reviewer spawn budget exceeded')
 
-    def call(self,name,root,prompt,effort='xhigh',interrupt=False):
-        if self.calls >= CALL_LIMITS[self.lane]:
+    def call(self,name,root,prompt,effort='xhigh',interrupt=False,time_budget_seconds=None):
+        if self.calls >= self.call_limit:
             raise InfrastructureError('Top-level Codex invocation budget exhausted')
         if self.case_deadline and time.monotonic() >= self.case_deadline:
             raise InfrastructureError('Scenario exceeded approved 40-minute limit')
@@ -323,7 +325,7 @@ the configured TMPDIR/TEMP directory; preserve native skill behavior.
               '--output-last-message',destination/'last-message.md','-']
         write(destination/'invocation.json',json.dumps({'command':list(map(str,args)),
               'model':MODEL,'reasoning':effort,'provider':'krill'},indent=2))
-        print(f'{self.lane}: real model call {self.calls}/{CALL_LIMITS[self.lane]}: {name}',flush=True)
+        print(f'{self.lane}: real model call {self.calls}/{self.call_limit}: {name}',flush=True)
         self.save()
         started=time.monotonic()
         interrupted=False
@@ -350,7 +352,7 @@ the configured TMPDIR/TEMP directory; preserve native skill behavior.
                             reason='Terminated externally immediately after canonical T001 completed'
                             terminate(proc)
                             break
-                    if (time.monotonic()-started>LOCK['limits']['call_timeout_seconds'] or
+                    if (time.monotonic()-started>(time_budget_seconds or LOCK['limits']['call_timeout_seconds']) or
                         (self.case_deadline and time.monotonic()>self.case_deadline)):
                         reason='Codex invocation/scenario exceeded approved timeout'
                         terminate(proc)

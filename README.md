@@ -1,17 +1,27 @@
-# Real Codex bridge compatibility tests
+# One small project: real Codex bridge test
 
-This public fixture tests unmodified Bridge 1.3.0 with Spec Kit 1.1.3 and Superpowers 7.0.0 using Codex CLI 0.162.1. The baseline is Spec Kit 1.0.12 and Superpowers 6.4.2. Every model process, including reviewers, must use `gpt-6.1-sol` via the Krill Responses endpoint.
+Default workflow: **One small project - bridge smoke** (`bridge-smoke.yml`).
 
-The controller prepares disposable consumer repositories and invokes real `codex exec` processes. It does not execute the skills as a substitute for the tested model. Independent black-box checks, snapshots, JSONL events, bridge state and Git history determine results; a model's success claim is insufficient.
+Fixed originals: Bridge 1.3.0, Spec Kit 1.1.3, Superpowers 7.0.0, Codex CLI 0.162.1.
+Only `gpt-6.1-sol` via the Krill Responses endpoint. The fixed consumer project has
+one task: implement `calculator.add(a,b)` and three standard-library unittest cases.
 
-Trigger **Real Codex bridge compatibility** manually in Actions. Set repository secret `KRILL_API_KEY` first. Only sanitized fixture evidence is uploaded; credentials and Codex auth caches are excluded. Actions has read-only permissions and the model has no GitHub push credentials.
+The controller prepares the canonical spec/plan/tasks. One real Codex invocation
+reads the installed handoff command and Bridge skill, creates the handoff, adapts
+T001 for native SP execution, applies TDD, reviews and keeps the feature branch.
+It is limited to **one new top-level call, one short reviewer, low reasoning and
+five minutes for the model process**. No SK design generation, platform matrix,
+fault scenarios, recovery tests or second feature in the small test.
 
-Model-call budgets: latest Linux 12, latest Windows 4, baseline Linux 4 (20 total); reviewers 6/3/3 (12 total). Each top-level call is limited to 20 minutes. These are invocation bounds, not API-request or monetary bounds. Token usage is reported when available.
+Independent checks inspect actual files, test failures and passes, the exact task
+adapter, canonical checkbox, commit, branch and handoff completion. Success prose
+does not count as evidence. Original installed skill bytes are hash-checked;
+no upstream fixes are applied. All evidence is sanitized before upload.
 
-The first Actions run completed one successful connection probe, then stopped on a controller snapshot error. A transient push failure caused a second old-workflow probe before cancellation. Both calls count against the 20-call budget. The repaired run reuses the externally checked successful probe and permits 10 latest-Linux calls plus 4 Windows and 4 baseline calls. `prior-runs/*-summary.json` preserves this accounting.
+Set Actions secret `KRILL_API_KEY`, then trigger `bridge-smoke.yml` manually.
+The larger `compatibility.yml` is retained for reproducibility and disabled.
 
-Scenarios cover actual SK document generation and automatic handoff, native SP execution/TDD/review/finishing, interruption and resume, mandatory post-hook failure, contradictory requirements, denied boundaries, drift, and next-feature archival. Latest Windows and old-version Linux use the same fixed product fixture for comparison. No upstream patches are applied to make tests pass.
-
-The synthetic product interface is `python -m task_app --store PATH add TITLE`, `list`, `complete ID`, and `delete ID`, using JSON stdout and error exit code 2. It stores versioned JSON, validates 1–100 code-point titles, preserves data across reloads and rejects corrupt stores without overwriting them.
-
-Reports distinguish pass, compatibility failure, and infrastructure blockage. Missing execution evidence is not a pass. Gateway model identity is reported only to the extent client/session/provider metadata can establish it.
+Prior runs are retained in `prior-runs/*-summary.json`. They used six top-level
+calls and two reviewers in total; the last run verified SK generation and a real
+automatic `after_tasks` handoff, then was canceled when the user narrowed scope
+to a simple bridge test. Its incomplete execution is not a compatibility pass.

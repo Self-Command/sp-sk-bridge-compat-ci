@@ -1,0 +1,42 @@
+name: One small project - bridge smoke
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - name: Controller checks and fixed tooling
+        run: |
+          python -m unittest discover -s tests -v
+          npm install -g @openai/codex@0.162.1
+          python -m pip install uv
+      - name: One real Codex call
+        env:
+          KRILL_API_KEY: ${{ secrets.KRILL_API_KEY }}
+          PYTHONUTF8: '1'
+        run: python scripts/run_smoke.py
+      - name: Sanitize evidence
+        id: sanitized
+        if: always()
+        env:
+          KRILL_API_KEY: ${{ secrets.KRILL_API_KEY }}
+        run: python scripts/sanitize.py evidence
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.sanitized.outcome == 'success'
+        with:
+          name: simple-bridge-evidence
+          path: evidence/
+          include-hidden-files: true
+          retention-days: 7
