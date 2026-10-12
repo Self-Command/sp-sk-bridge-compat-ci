@@ -1,0 +1,10 @@
+{
+  "run_url": "https://github.com/Self-Command/sp-sk-bridge-compat-ci/actions/runs/38246447751",
+  "model_calls": 4,
+  "reviewer_spawns": 2,
+  "model": "gpt-6.1-sol",
+  "completed_findings": ["SK-generated artifacts exist", "after_tasks really created bridge handoff"],
+  "usage": {"input_tokens":1518699,"cached_input_tokens":1340247,"output_tokens":28536},
+  "usage_scope": "Three completed top-level SK calls only; interrupted executor and reviewer usage not fully reported.",
+  "stopped_reason": "User requested a simple project focused on bridge correctness and less token use. Matrix canceled before application implementation."
+}

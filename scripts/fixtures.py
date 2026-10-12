@@ -61,6 +61,11 @@ verification and fresh-context branch review. Storage failures never silently
 destroy the original. Use a feature branch; finish by keeping it.
 '''
         entries=MAIN_TASKS
+    elif kind == 'smoke':
+        write(root/'.specify/memory/constitution.md',CONSTITUTION.replace('and pytest','and unittest').replace('Do not overwrite corrupt data. ',''))
+        spec='# Tiny calculator\ncalculator.add(a, b) accepts integers and returns their sum. Check (2,3)->5, (-2,2)->0 and (0,0)->0. No CLI, persistence or other feature.\n'
+        plan='# Calculator plan\nOne calculator.py module and one unittest test file, using only the Python standard library. TDD, verify, commit, review, keep branch.\n'
+        entries=['Implement calculator.add(a, b) in calculator.py with exactly three unittest cases in tests/test_calculator.py: (2,3) gives 5, (-2,2) gives 0, (0,0) gives 0. Write and run the failing tests first, then implement. Verify with python -m unittest discover -s tests -v and commit after passing.']
     elif kind == 'resume':
         spec='''# Resume product
 resume_app.normalize_title(title) strips surrounding whitespace and raises
