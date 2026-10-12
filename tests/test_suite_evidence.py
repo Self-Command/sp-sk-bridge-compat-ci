@@ -34,3 +34,10 @@ class SuiteEvidenceTests(unittest.TestCase):
         old={'specs/001/tasks.md':'- [ ] T001 Implement add.\n'}
         new={'specs/001/tasks.md':old['specs/001/tasks.md']+'\n## T001 execution evidence\nDone.\n'}
         self.assertFalse(all(preserved_contracts(old,new).values()))
+
+    def test_record_red_green_progress_is_legal_without_changed_task_requirements(self):
+        old={'specs/002/tasks.md':'- [ ] T001 Implement subtract; record red/green commands and results in tasks.md.\nImplementation remains pending.\n'}
+        new={'specs/002/tasks.md':old['specs/002/tasks.md'].replace('[ ]','[x]').replace('Implementation remains pending.','Implementation evidence follows.')+'\n## T001 execution evidence\nRED failed, GREEN passed.\n'}
+        self.assertTrue(all(preserved_contracts(old,new).values()))
+        new['specs/002/tasks.md']=new['specs/002/tasks.md'].replace('subtract','multiply')
+        self.assertFalse(all(preserved_contracts(old,new).values()))

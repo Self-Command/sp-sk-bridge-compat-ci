@@ -1,0 +1,49 @@
+name: Final bridge recovery - one remaining call
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  recovery:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - name: Check verifier and install fixed tooling
+        run: |
+          python -m unittest discover -s tests -v
+          npm install -g @openai/codex@0.162.1
+          python -m pip install uv pyyaml
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: final-bridge-evidence
+          run-id: 38256610954
+          github-token: ${{ github.token }}
+          path: prior-evidence
+      - name: Recover exact failed hook state with one call
+        env:
+          KRILL_API_KEY: ${{ secrets.KRILL_API_KEY }}
+          PRIOR_EVIDENCE: prior-evidence
+          PYTHONUTF8: '1'
+        run: python scripts/recover_suite.py
+      - name: Sanitize evidence
+        id: sanitized
+        if: always()
+        env:
+          KRILL_API_KEY: ${{ secrets.KRILL_API_KEY }}
+        run: python scripts/sanitize.py evidence
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.sanitized.outcome == 'success'
+        with:
+          name: recovered-complete-bridge-evidence
+          path: evidence/
+          include-hidden-files: true
+          retention-days: 7
