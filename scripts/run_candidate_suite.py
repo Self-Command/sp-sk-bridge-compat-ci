@@ -46,7 +46,7 @@ class CandidateSuite(FullSuite):
         return {str(p.relative_to(root)):digest(p) for p in root.rglob('*') if p.is_file()
                 and (str(p.relative_to(root)).replace('\\','/').startswith(('specs/','.specify/','.agents/'))
                      or str(p.relative_to(root)).replace('\\','/').startswith('tests/')
-                     or p.name == 'resume_app.py')}
+                     or p.name == 'resume_app.py' or p.name.startswith('test_') and p.suffix=='.py')}
 
     def convergence_case(self, root, kind, fault=''):
         feature = self.feature(root)
@@ -159,7 +159,7 @@ installed native skills. Summarize actual results, not planned outcomes.
             'blocked':self.c.state(post['root']).get('status')=='blocked',
             'tasks_unchanged':(self.feature(post['root'])/'tasks.md').read_bytes()==post['tasks']})
         self.record('bridge convergence actual verification and original SK skill unchanged',{
-            'installed_entry_used':'speckit-speckit-superpowers-bridge-converge' in injected_skills(self.c.evidence/'sessions'),
+            'installed_entry_used':'speckit-speckit-superpowers-bridge-converge' in injected_skills(self.c.home/'sessions'),
             'real_tests':bool(re.search(r'unittest.*discover',commands)),
             'native_command_unchanged':all(digest(case['root']/'.agents/skills/speckit-converge/SKILL.md')==case['native'] for case in cases),
             'original_prerequisite_retained':'`$speckit-implement` has run' in original})

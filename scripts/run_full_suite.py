@@ -527,6 +527,14 @@ previous reviews exist in the referenced main product evidence. Reuse them;
 do not spawn reviewers. Preserve registry faults and product code.
 ''',300)
         output=(self.c.evidence/'10-hook-registry-variants/last-message.md').read_text(encoding='utf-8',errors='replace')
+        # Diagnostics may have been reported in earlier assistant messages or
+        # actual parser output; the final concise summary need not repeat them.
+        for line in (self.c.evidence/'10-hook-registry-variants/events.jsonl').read_text().splitlines():
+            event=json.loads(line)
+            item=event.get('item',{})
+            if event.get('type')=='item.completed':
+                if item.get('type')=='agent_message':output+='\n'+item.get('text','')
+                elif item.get('type')=='command_execution':output+='\n'+item.get('aggregated_output','')
         for kind,root,sha in variants:
             checks={'complete':self.c.state(root).get('status')=='complete',
                     'product_unchanged':digest(root/'resume_app.py')==sha,
