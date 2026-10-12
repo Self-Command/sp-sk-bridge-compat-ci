@@ -27,6 +27,17 @@ pass, fail, blocked and not_covered separately. Exported rollouts, commands,
 snapshots, independent checks and token counts are sanitized before upload.
 The historical calculator suite below remains available and unchanged in scope.
 
+The full-suite execution spans runs
+[38267594773](https://github.com/Self-Command/sp-sk-bridge-compat-ci/actions/runs/38267594773)
+and [38271885332](https://github.com/Self-Command/sp-sk-bridge-compat-ci/actions/runs/38271885332).
+`bridge-full-continue.yml` imports the first run's evidence and retains every call
+and reviewer in the same budget. It reuses the Linux product and retries Windows
+after a confirmed pre-request cmd.exe quoting failure. No completed product work
+is regenerated. The independent recheck admits factual injected-fault evidence
+without allowing original task or requirement changes. Parser-error reporting
+is checked against the real diagnostic, including errors without the word YAML.
+Raw first-run evidence remains available alongside subsequent checks.
+
 # Complete small-project bridge validation
 
 Primary workflow: **Complete small project - all bridge skills** (`bridge-complete.yml`).

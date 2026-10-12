@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
-from full_verify import contract_ok, task_adapter_check, tests_pass, skill_read, usage
+from full_verify import contract_ok, task_adapter_check, tests_pass, skill_read, usage, yaml_problem_reported
 from sanitize import redact
 from suite_verify import rows
 
@@ -66,6 +66,12 @@ class FullEvidenceTests(unittest.TestCase):
         self.assertFalse(contract_ok(old,{path:new[path].replace('Implement normalize_title','Implement other')}))
         self.assertFalse(contract_ok(old,{path:new[path]+'- [ ] T004 New requirement\n'}))
         self.assertFalse(contract_ok(old,{path:new[path].replace('tests exit 0.','MUST add persistence; tests exit 0.')}))
+
+    def test_actual_parser_diagnostic_does_not_require_its_class_name(self):
+        broken='hooks: [ deliberately invalid: [\n'
+        self.assertTrue(yaml_problem_reported("expected the node content, but found '<stream end>'",broken))
+        self.assertFalse(yaml_problem_reported('YAML malformed; continue.',broken))
+        self.assertFalse(yaml_problem_reported('expected the node content', 'hooks: []'))
 
 
 if __name__=='__main__':unittest.main()

@@ -67,6 +67,16 @@ def tests_pass(result):
     return result['exit_code']==0 and bool(re.search(r'Ran [1-9]\d* tests?\b[\s\S]*\bOK\b',text))
 
 
+def yaml_problem_reported(text, malformed):
+    """Require the actual parser diagnostic, even when it omits 'YAML'."""
+    import yaml
+    try:yaml.safe_load(malformed)
+    except yaml.YAMLError as exc:
+        problem=getattr(exc,'problem',None)
+        return bool(problem and problem in text)
+    return False
+
+
 def skill_read(records, name):
     return any(x.get('exit_code')==0 and name in x.get('command','')
                and 'SKILL.md' in x.get('command','')

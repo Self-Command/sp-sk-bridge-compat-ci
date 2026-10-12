@@ -25,7 +25,7 @@ import yaml
 from fixtures import write, create
 from full_verify import (CONTRACT, ast_function, contract_ok, model_metadata, product,
                          protected_hashes, protected_ok, records, run, skill_read,
-                         task_adapter_check, tests_pass, usage)
+                         task_adapter_check, tests_pass, usage, yaml_problem_reported)
 from run_ci import Controller, InfrastructureError, ROOT, WIN
 from sanitize import redact
 from suite_verify import injected_skills, rows, tdd_order
@@ -529,7 +529,7 @@ do not spawn reviewers. Preserve registry faults and product code.
                        else (root/'.specify/extensions.yml').read_text()=='hooks: [ deliberately invalid: [\n'}
             if kind=='malformed':
                 checks['mandatory_hooks_not_checked_reported']=bool(re.search(r'(?:no hooks|not checked|unchecked|未.*检查|未.*执行)',output,re.I))
-                checks['parser_error_reported']=bool(re.search(r'pars|yaml|解析',output,re.I))
+                checks['parser_error_reported']=yaml_problem_reported(output,(root/'.specify/extensions.yml').read_text())
             self.record(kind+' hook registry lifecycle',checks)
             self.c.snapshot('10-hooks-'+kind,root)
 
