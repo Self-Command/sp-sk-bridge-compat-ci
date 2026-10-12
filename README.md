@@ -1,3 +1,29 @@
+# Complete small-project bridge validation
+
+Primary workflow: **Complete small project - all bridge skills** (`bridge-complete.yml`).
+Pinned originals: Bridge 1.3.0, Spec Kit 1.1.3, Superpowers 7.0.0, Codex CLI 0.162.1.
+Only `gpt-6.1-sol` through Krill Responses, with low reasoning for all calls and reviewers.
+
+The model generates SK constitution/spec/plan/tasks and performs analysis, automatic
+handoff, native SP execution/TDD/review/verification/finishing, and canonical progress.
+One calculator project first adds `add` via the normal alias, then adds `subtract`
+via the canonical execute entry after completed-feature archival. Each has three
+stdlib unittest cases. Mandatory pre/post hooks are genuinely invoked; an intentional
+post-hook failure must prevent completion, followed by fresh-session recovery.
+Protocol fixtures call the standalone handoff and guard entries, cover all five guard
+rules, missing design files, requirements conflict and read-only readiness.
+
+Normal run: seven top-level calls, hard limit eight, at most two reviewers.
+Independent checks inspect actual files, runtime-injected skill messages, command exits,
+ordered test failures/passes, hook markers, task adapters and handoff events. Any failed
+or blocked check fails the Actions job. Original skills and scripts remain unchanged.
+Evidence is sanitized and uploaded as `complete-bridge-evidence`, including a report
+and usage counts from both main and reviewer sessions. This workflow runs on Linux;
+other platforms and agents are not inferred to pass.
+
+Set repository secret `KRILL_API_KEY` and manually dispatch `bridge-complete.yml`.
+Previous smoke evidence and the disabled larger matrix are retained below.
+
 # One small project: real Codex bridge test
 
 Default workflow: **One small project - bridge smoke** (`bridge-smoke.yml`).
