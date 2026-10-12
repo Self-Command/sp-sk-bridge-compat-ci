@@ -52,7 +52,7 @@ def main():
         if state.get('status')!='executing' or not any(x.get('forced_failure') and x.get('exit_code')==23 for x in hookrows):
             raise RuntimeError('Not the actual failed post-hook state')
         if len(c.spawns)!=2:raise RuntimeError('Both original code reviews are not accounted for')
-        (suite.root/'ci_hooks/FAIL_POST').unlink()
+        (suite.root/'ci_hooks/FAIL_POST').unlink(missing_ok=True)
         code_before={str(p.relative_to(suite.root)):digest(p) for p in [suite.root/'calculator.py',*sorted((suite.root/'tests').glob('*.py'))]}
         c.command('recovery-product-add',['git','add','.'],suite.root)
         c.command('recovery-product-commit',['git','commit','-m','test: resume real failed hook after external fixture repair'],suite.root)
