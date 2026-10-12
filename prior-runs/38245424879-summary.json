@@ -1,0 +1,13 @@
+{
+  "run_url": "https://github.com/Self-Command/sp-sk-bridge-compat-ci/actions/runs/38245424879",
+  "model_calls": 1,
+  "reviewer_spawns": 0,
+  "model": "gpt-6.1-sol",
+  "reasoning": "low",
+  "probe_succeeded": true,
+  "actual_tool_operations": ["write connection-probe.txt", "read connection-probe.txt"],
+  "exit_code": 0,
+  "usage": {"input_tokens":46118,"cached_input_tokens":29952,"output_tokens":271},
+  "controller_defect": "Snapshot attempted git diff main in a probe repository without main. No product compatibility scenario was executed.",
+  "remaining_top_level_invocation_budget": 19
+}

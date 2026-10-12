@@ -103,7 +103,7 @@ def evidence_flags(text):
         except ValueError:
             continue
         item = event.get('item', {})
-        if item.get('type') == 'command_execution':
+        if event.get('type') == 'item.completed' and item.get('type') == 'command_execution':
             commands.append(item)
     joined = '\n'.join(i.get('command', '') for i in commands)
     output = '\n'.join(str(i.get('aggregated_output', '')) for i in commands)

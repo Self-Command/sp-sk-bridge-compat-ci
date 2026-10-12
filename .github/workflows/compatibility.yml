@@ -54,6 +54,7 @@ jobs:
         with:
           name: evidence-latest-linux
           path: evidence/
+          include-hidden-files: true
           retention-days: 7
           if-no-files-found: warn
   live:
@@ -100,6 +101,7 @@ jobs:
         with:
           name: evidence-${{ matrix.lane }}
           path: evidence/
+          include-hidden-files: true
           retention-days: 7
           if-no-files-found: warn
   report:

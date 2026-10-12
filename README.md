@@ -8,6 +8,8 @@ Trigger **Real Codex bridge compatibility** manually in Actions. Set repository 
 
 Model-call budgets: latest Linux 12, latest Windows 4, baseline Linux 4 (20 total); reviewers 6/3/3 (12 total). Each top-level call is limited to 20 minutes. These are invocation bounds, not API-request or monetary bounds. Token usage is reported when available.
 
+The first Actions run completed one successful connection probe, then stopped on a controller snapshot error. That call counts against the 20-call budget; the repaired run permits 11 latest-Linux calls plus 4 Windows and 4 baseline calls. `prior-runs/38245424879-summary.json` preserves this accounting.
+
 Scenarios cover actual SK document generation and automatic handoff, native SP execution/TDD/review/finishing, interruption and resume, mandatory post-hook failure, contradictory requirements, denied boundaries, drift, and next-feature archival. Latest Windows and old-version Linux use the same fixed product fixture for comparison. No upstream patches are applied to make tests pass.
 
 The synthetic product interface is `python -m task_app --store PATH add TITLE`, `list`, `complete ID`, and `delete ID`, using JSON stdout and error exit code 2. It stores versioned JSON, validates 1–100 code-point titles, preserves data across reloads and rejects corrupt stores without overwriting them.
