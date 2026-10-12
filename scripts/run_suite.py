@@ -13,7 +13,7 @@ import yaml
 from fixtures import create, write
 from run_ci import Controller, InfrastructureError, MODEL
 from sanitize import redact
-from suite_verify import command_records, injected_skills, rows, tdd_order
+from suite_verify import command_records, injected_skills, rows, tdd_order, preserved_contracts
 from verify import digest, immutable_artifacts, tasks
 
 
@@ -183,7 +183,7 @@ Do not manually create a handoff merely to mask a failed automatic hook.
         flags=result['flags']
         checks={'external_behavior_pass':behavior.returncode==0,
                 'expected_tests_pass':suite.returncode==0 and f'Ran {test_count} tests' in suite.stderr,
-                'canonical_requirements_preserved':all(immutable_artifacts(before,self.c.read_artifacts(root)).values()),
+                'canonical_requirements_preserved':all(preserved_contracts(before,self.c.read_artifacts(root)).values()),
                 'all_task_ids_checked':bool(items) and all(t[1] for t in items),
                 'exact_task_adapter_observed':mapped,
                 'real_TDD_failure_before_pass':tdd_order(records),
