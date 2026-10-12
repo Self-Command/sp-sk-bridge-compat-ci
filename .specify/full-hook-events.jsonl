@@ -1,0 +1,7 @@
+{"phase": "pre", "status_before": "ready", "feature": "specs/001-title-task", "exit_code": 17}
+{"phase": "pre", "status_before": "ready", "feature": "specs/001-title-task", "exit_code": 0}
+{"phase": "accepted", "status_before": "ready", "feature": "specs/001-title-task", "exit_code": 0}
+{"phase": "pre", "status_before": "executing", "feature": "specs/001-title-task", "exit_code": 0}
+{"phase": "accepted", "status_before": "executing", "feature": "specs/001-title-task", "exit_code": 0}
+{"phase": "post", "status_before": "executing", "feature": "specs/001-title-task", "suite_exit": 0, "exit_code": 23}
+{"phase": "post", "status_before": "executing", "feature": "specs/001-title-task", "suite_exit": 0, "exit_code": 0}

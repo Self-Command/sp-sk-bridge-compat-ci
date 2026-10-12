@@ -1,0 +1,92 @@
+installed:
+- speckit-superpowers-bridge
+settings:
+  auto_execute_hooks: true
+hooks:
+  before_clarify:
+  - extension: speckit-superpowers-bridge
+    command: speckit.speckit-superpowers-bridge.guard
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.speckit-superpowers-bridge.guard?
+    description: Prevent Spec Kit contract changes while Superpowers implementation
+      is executing
+    condition: null
+  before_plan:
+  - extension: speckit-superpowers-bridge
+    command: speckit.speckit-superpowers-bridge.guard
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.speckit-superpowers-bridge.guard?
+    description: Prevent Spec Kit contract changes while Superpowers implementation
+      is executing
+    condition: null
+  before_tasks:
+  - extension: speckit-superpowers-bridge
+    command: speckit.speckit-superpowers-bridge.guard
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.speckit-superpowers-bridge.guard?
+    description: Prevent Spec Kit contract changes while Superpowers implementation
+      is executing
+    condition: null
+  before_implement:
+  - extension: speckit-superpowers-bridge
+    command: speckit.speckit-superpowers-bridge.guard
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.speckit-superpowers-bridge.guard?
+    description: Block speckit.implement for features handed off to Superpowers
+    condition: null
+  - extension: ci-pre
+    command: speckit.ci.pre
+    optional: false
+    enabled: true
+    condition: null
+    description: Synthetic full-test pre
+  - extension: ci-accepted
+    command: speckit.ci.accepted
+    optional: true
+    enabled: true
+    condition: null
+    description: Synthetic full-test accepted
+    prompt: 'Approved test answer: accept.'
+  - extension: ci-declined
+    command: speckit.ci.declined
+    optional: true
+    enabled: true
+    condition: null
+    description: Synthetic full-test declined
+    prompt: 'Approved test answer: decline.'
+  - extension: ci-disabled
+    command: speckit.ci.sentinel
+    optional: false
+    enabled: false
+    condition: null
+    description: Synthetic full-test disabled
+  - extension: ci-conditional
+    command: speckit.ci.sentinel
+    optional: false
+    enabled: true
+    condition: reserved-for-upstream
+    description: Synthetic full-test conditional
+  after_tasks:
+  - extension: speckit-superpowers-bridge
+    command: speckit.speckit-superpowers-bridge.handoff
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.speckit-superpowers-bridge.handoff?
+    description: Create the Superpowers handoff after Spec Kit task generation
+    condition: null
+  after_implement:
+  - extension: ci-post
+    command: speckit.ci.post
+    optional: false
+    enabled: true
+    condition: null
+    description: Synthetic full-test post

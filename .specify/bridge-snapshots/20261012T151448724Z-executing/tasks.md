@@ -1,0 +1,53 @@
+---
+description: "Implementation tasks for Title-to-task"
+---
+
+# Tasks: Title-to-task
+
+**Input**: Design documents from `/specs/001-title-task/`
+**Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/interfaces.md, quickstart.md
+**Tests**: Required observed test-first development using Python 3.13 standard-library unittest.
+**Organization**: Three cohesive dependent tasks for User Story 1; tests belong to each task.
+
+## Format: `[ID] [P?] [Story] Description`
+
+Each checkbox records implementation completion only after observed red/green tests and evidence. Paths are relative to repository root. No parallel markers apply.
+
+## Phase 1: Setup (Shared Infrastructure)
+
+No separate packaging or directory scaffolding tasks are needed.
+
+## Phase 2: Foundational (Blocking Prerequisites)
+
+No separate foundational tasks are needed; normalization is part of US1.
+
+## Phase 3: User Story 1 - Create an incomplete task (Priority: P1) 🎯 MVP
+
+**Goal**: Provide the approved library and CLI contract in one module.
+**Independent Test**: Library assertions and CLI subprocess assertions cover all five acceptance scenarios, including Unicode, internal whitespace, blanks, exact fields, and exits.
+
+- [ ] T001 [US1] Write normalize_title tests in tests/test_resume_app.py first; run `python -m unittest discover -s tests -v` and observe failure attributable to missing normalization before implementing normalize_title in resume_app.py. Require str.strip() surrounding whitespace removal, preserved internal whitespace and non-empty Unicode, and ValueError for empty, ASCII-whitespace-only, and Unicode-whitespace-only results (FR-001; SC-003). Observe green tests, append actual commands, exit codes and red/green outcomes without rewriting prior evidence under `## T001 execution evidence` in canonical specs/001-title-task/tasks.md, update this checkbox, and commit resume_app.py, tests/test_resume_app.py and canonical tasks.md together.
+- [ ] T002 [US1] Depending on completed T001, write make_task tests in tests/test_resume_app.py first; run `python -m unittest discover -s tests -v` and observe failure attributable to missing task creation before implementing make_task in resume_app.py using normalize_title. Require exactly title: normalized string and completed: boolean false, unchanged internal whitespace/Unicode, and ValueError for blank titles (FR-002; SC-002/SC-003). Observe green tests including T001 regressions, append actual commands, exit codes and red/green outcomes without rewriting prior evidence under `## T002 execution evidence` in canonical specs/001-title-task/tasks.md, update this checkbox, and commit resume_app.py, tests/test_resume_app.py and canonical tasks.md together.
+- [ ] T003 [US1] Depending on completed T001 and T002, write CLI subprocess tests in tests/test_resume_app.py first; run `python -m unittest discover -s tests -v` and observe failure attributable to missing CLI behavior before implementing `python resume_app.py TITLE` in resume_app.py using make_task and standard-library JSON. Require decoded JSON with exactly title and completed=false matching the library for normal, internal-whitespace and Unicode titles with exit 0; empty, ASCII/Unicode-whitespace-only and missing TITLE require exit 2 without successful task JSON (FR-003/FR-004; SC-001/SC-002/SC-003). Observe green tests including all library regressions, append actual commands, exit codes and red/green outcomes without rewriting prior evidence under `## T003 execution evidence` in canonical specs/001-title-task/tasks.md, update this checkbox, and commit resume_app.py, tests/test_resume_app.py and canonical tasks.md together.
+
+**Checkpoint**: All five acceptance scenarios pass across their supported surfaces.
+
+## Final Phase: Polish & Cross-Cutting Concerns
+
+No separate polish tasks. All work stays within FR-005: one module, standard library, no additional features or runtime dependencies.
+
+## Dependencies & Execution Order
+
+`T001 → T002 → T003`, with T003 explicitly depending on both T001 and T002. Each task's observed red/green cycle, append-only canonical evidence, checkbox update and commit must finish before the next task starts.
+
+## Parallel Example: User Story 1
+
+None: all tasks depend on preceding work and share resume_app.py and tests/test_resume_app.py.
+
+## Implementation Strategy
+
+Deliver normalization, then task creation, then CLI incrementally. The MVP is the complete US1 after T003. Use Python 3.13 and unittest; preserve green regressions. Do not constrain non-string inputs, extra arguments, JSON formatting/key order/escaping or diagnostics beyond the approved contract. Keep the feature branch (finish option 3); do not merge or publish.
+
+## Notes
+
+Execution evidence must be actual observed results, never planned or fabricated. Append evidence only during implementation under each required heading; retain previous entries. No application code or tests are generated by this task-generation step.
