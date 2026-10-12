@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "extensions": {
+    "speckit-superpowers-bridge": {
+      "version": "1.4.0",
+      "source": "local",
+      "manifest_hash": "sha256:62e62dbe95b31fd82d558abdd377115a163819c367d00415fe8ef49e5c60bc36",
+      "enabled": true,
+      "priority": 10,
+      "registered_commands": {
+        "codex": [
+          "speckit.speckit-superpowers-bridge.converge",
+          "speckit.speckit-superpowers-bridge.handoff",
+          "speckit.speckit-superpowers-bridge.guard",
+          "speckit.speckit-superpowers-bridge.execute",
+          "speckit.superpowers-bridge"
+        ]
+      },
+      "registered_skills": [],
+      "installed_at": "2026-10-12T18:15:33.970883+00:00"
+    }
+  }
+}
