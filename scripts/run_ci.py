@@ -253,7 +253,7 @@ the configured TMPDIR/TEMP directory; preserve native skill behavior.
         for path in root.rglob('*'):
             if not path.is_file() or any(part in {'.git','__pycache__','.pytest_cache','.worktrees'} for part in path.relative_to(root).parts):
                 continue
-            if path.suffix.lower() in {'.md','.py','.json','.jsonl','.yml','.yaml','.toml','.txt','.sh','.ps1'} or path.name=='.gitignore':
+            if path.suffix.lower() in {'.md','.py','.json','.jsonl','.yml','.yaml','.toml','.txt','.sh','.ps1'} or path.name in {'.gitignore','FAIL_POST'}:
                 target=destination/path.relative_to(root)
                 target.parent.mkdir(parents=True,exist_ok=True)
                 if path.stat().st_size < 5000000:
