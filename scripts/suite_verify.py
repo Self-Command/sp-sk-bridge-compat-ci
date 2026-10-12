@@ -54,7 +54,11 @@ def rows(path):
 
 def preserved_contracts(before,after):
     """Allow evidence explicitly required by the original task; never allow requirement edits."""
-    normalize=lambda text:re.sub(r'^(- \[)[xX](\] T\d+)',r'\1 \2',text,flags=re.M)
+    def normalize(text):
+        text=re.sub(r'^(- \[)[xX](\] T\d+)',r'\1 \2',text,flags=re.M)
+        # Native generated task prose describes execution progress separately
+        # from requirements. Permit this exact pending -> evidence status change.
+        return text.replace('Implementation remains pending.','Implementation [progress].').replace('Implementation evidence follows.','Implementation [progress].')
     checks={}
     for name,old in before.items():
         new=after.get(name,'')
@@ -64,7 +68,7 @@ def preserved_contracts(before,after):
             continue
         appendix=right[len(left):] if right.startswith(left) else ''
         original_lines=re.findall(r'^- \[[ xX]\] T\d+.*$',old,re.M)
-        evidence_requested=any('evidence' in line.lower() and 'tasks.md' in line for line in original_lines)
+        evidence_requested=any('tasks.md' in line and re.search(r'evidence|record.*(?:red/green|test|commands|results)',line,re.I) for line in original_lines)
         headings=re.findall(r'^## ([^\n]+)',appendix,re.M)
         # Native SK may explicitly require execution evidence in tasks.md. It must
         # be append-only, with no new task IDs and only execution-evidence headings.
