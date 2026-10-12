@@ -309,7 +309,8 @@ the configured TMPDIR/TEMP directory; preserve native skill behavior.
         if len(self.spawns)>self.spawn_limit:
             raise InfrastructureError('Reviewer spawn budget exceeded')
 
-    def call(self,name,root,prompt,effort='xhigh',interrupt=False,time_budget_seconds=None):
+    def call(self,name,root,prompt,effort='xhigh',interrupt=False,time_budget_seconds=None,
+             *, interrupt_check=None, max_reviewers=1, finish_choice='keep'):
         if self.calls >= self.call_limit:
             raise InfrastructureError('Top-level Codex invocation budget exhausted')
         if self.case_deadline and time.monotonic() >= self.case_deadline:
@@ -317,7 +318,13 @@ the configured TMPDIR/TEMP directory; preserve native skill behavior.
         self.calls+=1
         destination=self.evidence/name
         destination.mkdir(parents=True,exist_ok=True)
-        prompt='Read CI_CONSTRAINTS.md first if present. '+prompt+'\nOnly model gpt-6.1-sol is allowed, including reviewers. At most one reviewer spawn in this invocation. Finish choice is keep branch (option 3).'
+        suffix=(f'\nOnly model gpt-6.1-sol is allowed, including reviewers. '
+                f'At most {max_reviewers} reviewer spawn(s) in this invocation.')
+        if finish_choice=='keep':
+            suffix+=' Finish choice is keep branch (option 3).'
+        else:
+            suffix+=' Follow only the explicitly authorized finishing choices in the scenario.'
+        prompt='Read CI_CONSTRAINTS.md first if present. '+prompt+suffix
         write(destination/'prompt.txt',prompt)
         args=['codex','--no-daemon','exec','--json','--color','never','-m',MODEL,
               '-c',f'model_reasoning_effort="{effort}"','-c','model_provider="krill"',
@@ -345,6 +352,11 @@ the configured TMPDIR/TEMP directory; preserve native skill behavior.
                     for path,sha in self.protected.items():
                         if digest(path)!=sha:
                             raise InfrastructureError('External controller/verifier integrity changed')
+                    if interrupt_check is not None and interrupt_check():
+                        interrupted=True
+                        reason='Terminated externally after committed canonical T001 completed'
+                        terminate(proc)
+                        break
                     if interrupt:
                         checked=[p for p in (root/'specs').glob('*/tasks.md') if any(t[0]=='T001' and t[1] for t in tasks(p))]
                         if checked:

@@ -1,3 +1,32 @@
+# Original-release full bridge coverage
+
+Workflow: **Original bridge full coverage - Codex Linux Windows** (`bridge-full.yml`).
+Pinned Bridge 1.3.0 / SK 1.1.3 / SP 7.0.0 / Codex CLI 0.162.1, gpt-6.1-sol low.
+Linux runs first (at most 14 controller calls / 4 review agents), then Windows
+(at most 6 / 2), including failures and retries: 20 / 6 in total. Native files
+are hash-checked and never patched. Known original-release failures remain failures.
+
+The three-task title-to-task JSON fixture exercises native SP brainstorming and
+builder check, PRD-to-SK constitution/spec/clarify/plan/tasks/checklist/analyze,
+automatic handoff, SP TDD/execution/review/verification/finishing, and actual
+canonical task progress. Linux adds committed-task interruption with a native
+completion ledger, injected product-fault debugging, pre/post hook failures,
+fresh-session recovery, review remediation/re-review, hook registry variants,
+all four bridge entries, missing spec/plan/tasks, conflict blocking, native
+converge prerequisites, official GitHub MCP issue creation/deduplication, and
+worktree/local-merge/PR integration. Windows independently generates and completes
+the same main flow and checks the PowerShell protocol scripts.
+
+Only the test repository receives synthetic issues and `full-ci/<run>/...`
+branches. Existing policies that prohibit PR creation are reported as blocked;
+the runner never changes repository policies. The original `converge` contract
+is not waived when it requires SK implement. No agent/platform extrapolation.
+
+Run `python -m unittest discover -s tests -v` before dispatch. Evidence reports
+pass, fail, blocked and not_covered separately. Exported rollouts, commands,
+snapshots, independent checks and token counts are sanitized before upload.
+The historical calculator suite below remains available and unchanged in scope.
+
 # Complete small-project bridge validation
 
 Primary workflow: **Complete small project - all bridge skills** (`bridge-complete.yml`).
