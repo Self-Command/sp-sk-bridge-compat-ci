@@ -61,6 +61,8 @@ class FullEvidenceTests(unittest.TestCase):
         appendix='\n## T001 execution evidence\nRED exit 1; GREEN exit 0.\n\n## Recovery of injected product fault\n\n- Tests exit 1; removed external normalize_title rebinding; tests exit 0.\n'
         new={path:old[path].replace('[ ]','[x]')+appendix}
         self.assertTrue(contract_ok(old,new))
+        self.assertTrue(contract_ok({k.replace('/','\\'):v for k,v in old.items()},
+                                    {k.replace('/','\\'):v for k,v in new.items()}))
         self.assertFalse(contract_ok(old,{path:new[path].replace('Implement normalize_title','Implement other')}))
         self.assertFalse(contract_ok(old,{path:new[path]+'- [ ] T004 New requirement\n'}))
         self.assertFalse(contract_ok(old,{path:new[path].replace('tests exit 0.','MUST add persistence; tests exit 0.')}))

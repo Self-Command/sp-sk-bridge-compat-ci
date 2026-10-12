@@ -160,8 +160,9 @@ def contract_ok(before, after):
     # A separate factual recovery log is execution evidence; it cannot change
     # any original requirement. Only this precise heading and bounded section
     # are admitted, retaining the original prefix and task-ID checks.
-    filtered=dict(after)
-    for name,text in after.items():
+    normalized_before={name.replace('\\','/'):text for name,text in before.items()}
+    filtered={name.replace('\\','/'):text for name,text in after.items()}
+    for name,text in list(filtered.items()):
         if name.endswith('/tasks.md'):
             section=re.search(r'^## Recovery of injected product fault\n([\s\S]*?)(?=^## |\Z)',text,re.M)
             if section:
@@ -169,4 +170,4 @@ def contract_ok(before, after):
                 if ('normalize_title' in body and 'exit 1' in body and 'exit' in body
                     and not re.search(r'^- \[[ xX]\] T\d+|\bMUST\b|\bSHALL\b',body,re.M)):
                     filtered[name]=text[:section.start()]+text[section.end():]
-    return all(preserved_contracts(before,filtered).values())
+    return all(preserved_contracts(normalized_before,filtered).values())
