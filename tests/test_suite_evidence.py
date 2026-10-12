@@ -17,6 +17,16 @@ class SuiteEvidenceTests(unittest.TestCase):
         self.assertTrue(tdd_order([red,green]))
         self.assertFalse(tdd_order([green,red]))
 
+    def test_later_shell_success_does_not_erase_actual_failed_test_run(self):
+        red={'command':'python -m unittest -v test_app; git status --short',
+             'exit_code':0,'aggregated_output':'Ran 2 tests in 0.1s\nFAILED (failures=1)\nclean branch'}
+        green={'command':'python -m unittest discover -v',
+               'exit_code':0,'aggregated_output':'Ran 2 tests in 0.1s\nOK'}
+        self.assertTrue(tdd_order([red,green]))
+        self.assertFalse(tdd_order([green,red]))
+        red['aggregated_output']='Assertion: expected red first.'
+        self.assertFalse(tdd_order([red,green]))
+
     def test_skill_read_is_not_test_execution(self):
         records=[{'command':'cat test-driven-development/SKILL.md','exit_code':1,'aggregated_output':'FAILED (errors=1)'},
                  {'command':'cat unittest-guide.md','exit_code':0,'aggregated_output':'Ran 3 tests\nOK'}]

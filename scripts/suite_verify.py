@@ -24,10 +24,13 @@ def tdd_order(records):
         output=item.get('aggregated_output','')
         if not re.search(r'python\S*\s+.*(?:unittest|pytest)',item.get('command','')):
             continue
-        if item.get('exit_code') not in {0,None} and re.search(r'FAILED \((?:failures|errors)=|\d+ failed',output):
-            red.append(index)
-        if re.search(r'Ran [1-9]\d* tests?\b[\s\S]*\bOK\b|\d+ passed',output):
-            green.append(index)
+        # The shell's final exit code can belong to a later cat/git command.
+        # Grade actual nonempty test-run summaries in their output order.
+        summaries=re.finditer(r'Ran ([1-9]\d*) tests?\b(?:(?!\bRan \d+ tests?\b)[\s\S])*?(FAILED \((?:failures|errors)=|\bOK\b)',output)
+        for summary in summaries:
+            (red if summary.group(2).startswith('FAILED') else green).append((index,summary.start()))
+        for summary in re.finditer(r'\b([1-9]\d*) (failed|passed)\b',output):
+            (red if summary.group(2)=='failed' else green).append((index,summary.start()))
     return bool(red and green and min(red)<max(green))
 
 

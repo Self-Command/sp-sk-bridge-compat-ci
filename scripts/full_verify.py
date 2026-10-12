@@ -67,6 +67,13 @@ def tests_pass(result):
     return result['exit_code']==0 and bool(re.search(r'Ran [1-9]\d* tests?\b[\s\S]*\bOK\b',text))
 
 
+def test_suite(root):
+    """Use the generated project's actual standard-library test layout."""
+    args=['-m','unittest','discover']
+    if (Path(root)/'tests').is_dir():args+=['-s','tests']
+    return run(root,[*args,'-v'])
+
+
 def yaml_problem_reported(text, malformed):
     """Require the actual parser diagnostic, even when it omits 'YAML'."""
     import yaml
@@ -77,11 +84,17 @@ def yaml_problem_reported(text, malformed):
     return False
 
 
-def skill_read(records, name):
-    return any(x.get('exit_code')==0 and name in x.get('command','')
-               and 'SKILL.md' in x.get('command','')
-               and re.search(r'\bcat\b|Get-Content|read_text',x.get('command',''))
-               for x in records)
+def skill_read(records, name, expected_content=None):
+    for item in records:
+        command=item.get('command','')
+        if name not in command or 'SKILL.md' not in command or not re.search(r'\bcat\b|Get-Content|read_text',command):
+            continue
+        if item.get('exit_code')==0:return True
+        # A later command in the same shell batch may fail after a successful
+        # read. Require the entire pinned skill body in the actual tool output.
+        if expected_content and expected_content.replace('\r\n','\n').strip() in item.get('aggregated_output','').replace('\r\n','\n'):
+            return True
+    return False
 
 
 def records(root, name):
@@ -174,10 +187,17 @@ def contract_ok(before, after):
     filtered={name.replace('\\','/'):text for name,text in after.items()}
     for name,text in list(filtered.items()):
         if name.endswith('/tasks.md'):
-            sections=list(re.finditer(r'^## (Recovery of injected product fault|Final verification and review)\n([\s\S]*?)(?=^## |\Z)',text,re.M))
+            sections=list(re.finditer(r'^## (Recovery of injected product fault|Final verification and review|Injected fault recovery \(T001 remains complete\)|Final review repair evidence)\n([\s\S]*?)(?=^## |\Z)',text,re.M))
             for section in reversed(sections):
                 title,body=section.group(1,2)
-                facts=('normalize_title' in body and 'exit 1' in body and 'exit' in body) if title.startswith('Recovery') else ('reviewer' in body and 'tests' in body and 'Task commits:' in body)
+                if title.startswith('Recovery'):
+                    facts='normalize_title' in body and 'exit 1' in body and 'exit' in body
+                elif title.startswith('Injected fault'):
+                    facts='normalize_title' in body and 'exit 1' in body and 'exit 0' in body and bool(re.search(r'Ran [1-9]\d* tests?\b[\s\S]*FAILED',body))
+                elif title=='Final review repair evidence':
+                    facts=all(s in body for s in ('Important finding:','red:','green:','exit status 1','exit status 0')) and bool(re.search(r'Ran [1-9]\d* tests?\b[\s\S]*FAILED[\s\S]*Ran [1-9]\d* tests?\b[\s\S]*\bOK\b',body))
+                else:
+                    facts='reviewer' in body and 'tests' in body and 'Task commits:' in body
                 if facts and not re.search(r'^- \[[ xX]\] T\d+|\bMUST\b|\bSHALL\b',body,re.M):
                     text=text[:section.start()]+text[section.end():]
             filtered[name]=text

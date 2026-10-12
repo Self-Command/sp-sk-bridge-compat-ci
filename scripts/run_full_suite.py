@@ -26,6 +26,7 @@ from fixtures import write, create
 from full_verify import (CONTRACT, ast_function, contract_ok, model_metadata, product,
                          protected_hashes, protected_ok, records, run, skill_read,
                          task_adapter_check, tests_pass, usage, yaml_problem_reported)
+from full_verify import test_suite
 from run_ci import Controller, InfrastructureError, ROOT, WIN
 from sanitize import redact
 from suite_verify import injected_skills, rows, tdd_order
@@ -51,7 +52,7 @@ merge or push/PR into its specifically named test branches; never merge to main.
 Read required skills once, keep outputs concise and use actual tool evidence.
 '''
 
-HOOK_SCRIPT='''import json,subprocess,sys
+HOOK_SCRIPT='''import json,re,subprocess,sys
 from pathlib import Path
 phase=sys.argv[1]
 p=Path('.specify/superpowers-handoff.json')
@@ -60,10 +61,13 @@ code=0
 entry={'phase':phase,'status_before':s.get('status'),'feature':s.get('feature_directory')}
 if phase=='pre' and Path('ci_hooks/FAIL_PRE').exists():code=17
 if phase=='post':
- p=subprocess.run([sys.executable,'-m','unittest','discover','-s','tests','-v'],capture_output=True,text=True)
+ args=[sys.executable,'-m','unittest','discover']
+ if Path('tests').is_dir():args+=['-s','tests']
+ p=subprocess.run([*args,'-v'],capture_output=True,text=True)
  print(p.stdout+p.stderr)
  entry['suite_exit']=p.returncode
  code=p.returncode
+ if code==0 and not re.search(r'Ran [1-9]\\d* tests?\\b[\\s\\S]*\\bOK\\b',p.stdout+p.stderr):code=6
  if Path('ci_hooks/FAIL_POST').exists():code=23
 if phase=='sentinel':code=29
 entry['exit_code']=code
@@ -232,7 +236,8 @@ Do not write application code, scaffolding or tests. Do not invoke writing-plans
             'prd_written':len(text)>150,
             'approved_interfaces_present':all(k in text for k in ['normalize_title','make_task','resume_app.py']),
             'builder_review_spawned':len(self.c.spawns)-count==1,
-            'native_brainstorming_read':skill_read(records(self.c.evidence,'01-brainstorm-prd'),'brainstorming'),
+            'native_brainstorming_read':skill_read(records(self.c.evidence,'01-brainstorm-prd'),'brainstorming',
+                (self.c.sources['superpowers']/'skills/brainstorming/SKILL.md').read_text()),
             'no_application_before_SK':not (self.root/'resume_app.py').exists()})
         if not good:return False
         self.call('02-sk-design',self.root,'''Use $speckit-constitution,
@@ -382,7 +387,7 @@ Only transition to complete after real post-hook success and passing tests.
         return self.main_acceptance()
 
     def main_acceptance(self):
-        acceptance=product(self.root);test=run(self.root,['-m','unittest','discover','-s','tests','-v'])
+        acceptance=product(self.root);test=test_suite(self.root)
         write(self.c.evidence/'main-external-acceptance.json',json.dumps({'behavior':acceptance,'tests':test},ensure_ascii=False,indent=2))
         good=self.record('main product external acceptance and task completion',{
             'external_behavior':acceptance['pass'],'real_nonempty_suite':tests_pass(test),

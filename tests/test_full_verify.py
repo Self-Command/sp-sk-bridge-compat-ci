@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
-from full_verify import contract_ok, task_adapter_check, tests_pass, skill_read, usage, yaml_problem_reported
+from full_verify import contract_ok, task_adapter_check, tests_pass, skill_read, test_suite, usage, yaml_problem_reported
 from sanitize import redact
 from suite_verify import rows
 
@@ -20,6 +20,23 @@ class FullEvidenceTests(unittest.TestCase):
         command='cat skills/systematic-debugging/SKILL.md'
         self.assertFalse(skill_read([{'command':command,'exit_code':1}],'systematic-debugging'))
         self.assertTrue(skill_read([{'command':command,'exit_code':0}],'systematic-debugging'))
+
+    def test_later_batch_failure_requires_entire_original_skill_in_output(self):
+        content='---\nname: brainstorming\n---\n# Brainstorming\nAll native instructions.\n'
+        item={'command':'Get-Content skills/brainstorming/SKILL.md; rg absent-name',
+              'exit_code':1,'aggregated_output':content.replace('\n','\r\n')}
+        self.assertTrue(skill_read([item],'brainstorming',content))
+        item['aggregated_output']='# Brainstorming\nI read the skill.'
+        self.assertFalse(skill_read([item],'brainstorming',content))
+
+    def test_generated_root_and_nested_test_layouts_both_run_nonempty_tests(self):
+        for nested in (False,True):
+            with self.subTest(nested=nested),tempfile.TemporaryDirectory() as d:
+                directory=Path(d)/'tests' if nested else Path(d)
+                directory.mkdir(exist_ok=True)
+                self.assertFalse(tests_pass(test_suite(d)))
+                (directory/'test_fixture.py').write_text('import unittest\nclass Probe(unittest.TestCase):\n def test_actual(self):self.assertEqual(2+2,4)\n')
+                self.assertTrue(tests_pass(test_suite(d)))
 
     def test_adapter_requires_exact_description_and_canonical_identity(self):
         with tempfile.TemporaryDirectory() as d:

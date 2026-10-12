@@ -92,7 +92,7 @@ class CandidateSuite(FullSuite):
             elif mode=='drift':
                 with (feature/'plan.md').open('ab') as stream:stream.write(b'\nchanged after completion\n')
             elif mode=='pending':
-                write(feature/'tasks.md',(feature/'tasks.md').read_text().replace('- [x] T001','- [ ] T001'))
+                write(feature/'tasks.md',re.sub(r'^(- \[)[xX](\] T001)',r'\1 \2',(feature/'tasks.md').read_text(),flags=re.M))
                 # A current hash alone must not qualify an unfinished task.
                 state=self.c.state(root);state['artifacts_sha256']['tasks.md']=digest(feature/'tasks.md')
                 write(root/'.specify/superpowers-handoff.json',json.dumps(state))

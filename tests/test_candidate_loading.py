@@ -11,3 +11,7 @@ class CandidateLoadingTests(unittest.TestCase):
         import run_candidate_suite
         self.assertTrue(issubclass(run_candidate_suite.CandidateSuite,run_candidate_suite.FullSuite))
 
+    def test_selective_continuation_imports_before_paid_work(self):
+        import continue_candidate_suite
+        self.assertTrue(issubclass(continue_candidate_suite.ContinuedCandidate,continue_candidate_suite.CandidateSuite))
+
